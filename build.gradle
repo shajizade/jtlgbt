@@ -1,0 +1,26 @@
+apply plugin: 'application'
+version = '1.0'
+
+dependencies {
+    compile 'com.github.pengrad:java-telegram-bot-api:3.2.0'
+    compile group: 'com.google.guava', name: 'guava', version: '11.0.2'
+    compile project(':common-core')
+
+}
+
+
+task migrateTar(type: Tar) {
+    baseName = project.name
+    compression 'gzip'
+    extension 'tar'
+    destinationDir = "$buildDir/distributions" as File
+
+    from('src/main/resources/db/conf') {
+        into('migration/conf')
+    }
+    from('src/main/resources/db/migration') {
+        into('migration/sql')
+    }
+}
+
+
