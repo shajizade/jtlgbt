@@ -8,28 +8,34 @@ import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.model.User;
 import com.pengrad.telegrambot.request.GetFile;
 import com.pengrad.telegrambot.request.GetUpdates;
+import com.pengrad.telegrambot.request.SendMessage;
 import com.pengrad.telegrambot.response.BaseResponse;
 import com.pengrad.telegrambot.response.GetFileResponse;
 import com.pengrad.telegrambot.response.GetUpdatesResponse;
+import ir.saj.adventure.bot.callback.Callback;
 import ir.saj.adventure.bot.callback.GetFileCallback;
 import ir.saj.adventure.bot.handlers.ByteArrayHandler;
 import ir.saj.adventure.bot.handlers.StringHandler;
 import ir.saj.adventure.bot.interceptor.Interceptor;
 import ir.saj.adventure.bot.user.BotUserEntityInterface;
 import ir.saj.adventure.bot.user.BotUserServiceInterface;
-import ir.saj.adventure.common.CommonUtil;
 import ir.saj.adventure.exception.BadRequestException;
+import ir.saj.adventure.utils.Session;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.io.*;
+import java.io.ByteArrayOutputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadInfo;
 import java.net.*;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
-import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.Executors;
@@ -41,9 +47,11 @@ import java.util.concurrent.TimeUnit;
  *         Date: 8/8/2017
  */
 public class BotManager {
+    public static final int PHOTO_CAPTION_LIMIT = 1024;
     public static final int NUMBER_OF_CUNCURRENT_MESSAGES = 29;
     public static final Date START_DATE = new Date();
     final Integer updateInterval;
+    final Integer retryCountLimit = 5;
     BotUserServiceInterface dbUserService;
     TelegramBot bot;
     Integer lastUpdateId = -1;
@@ -62,6 +70,13 @@ public class BotManager {
     private String basePath = "D:\\";
     private Long retryQueueSize = 0L;
     private OkHttpClient client = null;
+    final Logger logger = LoggerFactory.getLogger(BotManager.class);
+    Session session = new Session();
+    private FludFilter fludFilter = new FludFilter();
+
+    public Session getSession() {
+        return session;
+    }
 
     public BotManager(String token, BotUserServiceInterface dbUserService, Integer updateInterval, String botUserName, String botName) {
         this(token, dbUserService, updateInterval, botUserName, botName, null);
@@ -124,7 +139,8 @@ public class BotManager {
             if (response.isOk()) {
                 seqPlusPlus();
                 if (response.updates().size() > 0) {
-                    System.out.println(CommonUtil.now() + " [" + sequence + "|Updates] " + response.updates().size());
+                    logger.info("[" + sequence + "|Updates] " + response.updates().size());
+                    //System.out.println(CommonUtil.now() + );
                 }
                 for (Update update : response.updates()) {
                     try {
@@ -135,12 +151,15 @@ public class BotManager {
                     lastUpdateId = update.updateId();
                 }
             } else {
-                System.out.println(CommonUtil.now() + "Failure IN UPDATES|Telegram Error Code: " + response.errorCode());
+                //System.out.println(CommonUtil.now() + "Failure IN UPDATES|Telegram Error Code: " + response.errorCode());
+                logger.error("Failure IN UPDATES|Telegram Error Code: " + response.errorCode());
                 updateErors.add(response.errorCode() + response.description());
                 updateFails++;
             }
         } catch (Exception ex) {
-            System.out.println(CommonUtil.now() + "EXCEPTION IN UPDATES| " + ex.getClass().getName() + "|" + ex.getMessage());
+            logger.error("EXCEPTION IN UPDATES| " + ex.getClass().getName() + "|" + ex.getMessage());
+            //System.out.println(CommonUtil.now() + "EXCEPTION IN UPDATES| " + ex.getClass().getName() + "|" + ex.getMessage());
+
             updateErors.add(ex.getClass().getName() + "|" + ex.getMessage());
             updateFails++;
         }
@@ -154,7 +173,10 @@ public class BotManager {
     }
 
     User from(Update update) {
-        return (update.message() != null ? update.message().from() : update.callbackQuery() != null ? update.callbackQuery().from() : null);
+        return (update.message() != null ? update.message().from() :
+                update.callbackQuery() != null ? update.callbackQuery().from() :
+                        update.inlineQuery() != null ? update.inlineQuery().from() :
+                                update.chosenInlineResult() != null ? update.chosenInlineResult().from() : null);
     }
 
     public void handleUpdate(Update update) {
@@ -180,12 +202,13 @@ public class BotManager {
             }
             chain.removeNull();
             for (Sendable sendable : chain) {
-                while (!sendQueue.offer(sendable)) ;
+                addSendable(sendable);
             }
             dbUserService.save(dbUser);
         } else if (update.channelPost() != null) {
             try {
-                System.out.println(CommonUtil.now() + "ChannelPost:" + update.channelPost().chat().id() + "|" + update.channelPost().chat().title());
+                //System.out.println(CommonUtil.now() + "ChannelPost:" + update.channelPost().chat().id() + "|" + update.channelPost().chat().title());
+                logger.info("ChannelPost:" + update.channelPost().chat().id() + "|" + update.channelPost().chat().title());
             } catch (Exception ignored) {
             }
         }
@@ -235,6 +258,7 @@ public class BotManager {
 
     public void addSendable(Sendable sendable) {
         while (!sendQueue.offer(sendable)) ;
+        sendable.increaseTryNumber();
     }
 
     public void saveFile(final String fileId, final String path) {
@@ -251,7 +275,8 @@ public class BotManager {
                     fos.flush();
                     fos.close();
                 } catch (Exception exc) {
-                    System.out.println(CommonUtil.now() + "Error On Saving File:" + fileId + " on path:" + path);
+                    //System.out.println(CommonUtil.now() + "Error On Saving File:" + fileId + " on path:" + path);
+                    logger.error("Error On Saving File:" + fileId + " on path:" + path);
                     exc.printStackTrace();
                 }
             }
@@ -283,7 +308,8 @@ public class BotManager {
                             }
                         } catch (Exception exp) {
                             if (exp instanceof SocketException || exp instanceof SocketTimeoutException || exp instanceof UnknownHostException) {
-                                System.out.println(CommonUtil.now() + " Retry Downlowding File in 1s...");
+                                //System.out.println(CommonUtil.now() + " Retry Downlowding File in 1s...");
+                                logger.info("Retry Downlowding File in 1s...");
                                 Thread.sleep(1000);
                                 downloadFileAsByteArray(fileId, handler);
                             } else {
@@ -310,12 +336,17 @@ public class BotManager {
         addSendable(getFile);
     }
 
+    public String getUsername() {
+        return botUserName;
+    }
+
     class SendTask implements Runnable {
         Integer number;
 
         public SendTask(Integer number) {
             this.number = number;
-            System.out.println(CommonUtil.now() + " T" + number + " started");
+            //System.out.println(CommonUtil.now() + " T" + number + " started");
+            logger.info("T" + number + " started");
         }
 
         @Override
@@ -323,31 +354,47 @@ public class BotManager {
             while (true) {
                 final Sendable sendable = sendQueue.poll();
                 if (sendable != null) {
-                    try {
-                        sendable.hashCode();
-                        final BaseResponse response = bot.execute(sendable.getSendable());
-                        if (response.isOk())
-                            sendable.getFuture().success(response);
-                        else {
-                            sendMessageFails++;
-                            setLogSendMessageError(response.errorCode() + response.description());
-                            if (response.errorCode() == 429)
-                                retrySendable(sendable, randomTime(5000, 2000));
-                            else {
-                                sendable.getFuture().fail();
+                    if (!fludFilter.fludCheck(sendable)) {
+                        retrySendable(sendable, 3000, false);
+                    } else {
+                        try {
+                            sendable.hashCode();
+                            if (sendable.sendMessage != null) {
+                                final String text = (String) sendable.sendMessage.getParameters().get("text");
+                                if (text.length() > 4000) {
+                                    sendable.sendMessage.getParameters().put("text", text.substring(0, 4000));
+                                    sendable.callback(new Callback() {
+                                        @Override
+                                        public void onSuccess(BaseResponse baseResponse) {
+                                            addSendable(new Sendable(new SendMessage(sendable.getChatId(), text.substring(4000))));
+                                        }
+                                    });
+                                }
                             }
+                            final BaseResponse response = bot.execute(sendable.getSendable());
+                            if (response.isOk())
+                                sendable.getFuture().success(response);
+                            else {
+                                sendMessageFails++;
+                                setLogSendMessageError(response.errorCode() + response.description());
+                                if (response.errorCode() == 429)
+                                    retrySendable(sendable, randomTime(30000, 2000));
+                                else {
+                                    sendable.getFuture().fail();
+                                }
+                            }
+                            logger.info("[T" + number + "|" + sendable.getChatId() + "]" + sendable.doneMessage() + (!response.isOk() ? ": " + response.errorCode() + "|" + response.description() : ""));
+                        } catch (Exception ex) {
+                            logger.error("Exception In SendMessage: " + ex.getClass().getName() + "|" + ex.getMessage());
+                            sendMessageFails++;
+                            setLogSendMessageError(ex.getClass().getName() + "|" + ex.getMessage());
+                            if (ex.getCause() instanceof SocketTimeoutException
+                                    || ex.getCause() instanceof NoRouteToHostException
+                                    || ex.getCause() instanceof UnknownHostException)
+                                retrySendable(sendable, randomTime(30000, 10000));
+                            else
+                                sendable.getFuture().fail();
                         }
-                        System.out.println(CommonUtil.now() + " [T" + number + "|" + sendable.getChatId() + "]" + sendable.doneMessage() + (!response.isOk() ? ": " + response.errorCode() + "|" + response.description() : ""));
-                    } catch (Exception ex) {
-                        System.out.println(CommonUtil.now() + " Exception In SendMessage: " + ex.getClass().getName() + "|" + ex.getMessage());
-                        sendMessageFails++;
-                        setLogSendMessageError(ex.getClass().getName() + "|" + ex.getMessage());
-                        if (ex.getCause() instanceof SocketTimeoutException
-                                || ex.getCause() instanceof NoRouteToHostException
-                                || ex.getCause() instanceof UnknownHostException)
-                            retrySendable(sendable, randomTime(1000, 500));
-                        else
-                            sendable.getFuture().fail();
                     }
                 }
                 try {
@@ -374,20 +421,33 @@ public class BotManager {
     }
 
     private void retrySendable(final Sendable sendable, final long milli) {
-        System.out.println(CommonUtil.now() + " Retry after " + milli + " (" + sendable.getChatId() + "|" + sendable.doneMessage() + ")");
-        retries++;
-        retryQueueSize++;
-        new Thread() {
-            @Override
-            public void run() {
-                try {
-                    Thread.sleep(milli);
-                } catch (InterruptedException ignored) {
+        retrySendable(sendable, milli, true);
+    }
+
+    private void retrySendable(final Sendable sendable, final long milli, final boolean countRetry) {
+        //System.out.println(CommonUtil.now() + " Retry after " + milli + " (" + sendable.getChatId() + "|" + sendable.doneMessage() + ")");
+        if (sendable.getRetries() < retryCountLimit) {
+            logger.warn("Retry after " + milli + " (" + sendable.getChatId() + "|" + sendable.doneMessage() + ") " + (!countRetry ? "[no count]" : ""));
+            retries++;
+            retryQueueSize++;
+            new Thread() {
+                @Override
+                public void run() {
+                    try {
+                        Thread.sleep(milli);
+                    } catch (InterruptedException ignored) {
+                    }
+                    if (!countRetry) {
+                        sendable.decreasTryNumber();
+                    }
+                    addSendable(sendable);
+                    retryQueueSize--;
                 }
-                addSendable(sendable);
-                retryQueueSize--;
-            }
-        }.start();
+            }.start();
+        } else {
+            logger.warn("Retry Rejected after " + sendable.getRetries() + " times");
+            sendable.future.fail();
+        }
     }
 
     public String getStat() {

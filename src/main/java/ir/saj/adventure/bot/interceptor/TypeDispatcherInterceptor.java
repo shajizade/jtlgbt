@@ -22,6 +22,9 @@ public class TypeDispatcherInterceptor implements Interceptor {
         String type = chain.getFromEntity().getType();
         if (type == null)
             return false;
-        return interceptorMap.get(type).handle(chain);
+        Interceptor interceptor = interceptorMap.get(type);
+        if (interceptor == null)
+            return false;
+        return interceptor.handle(chain);
     }
 }

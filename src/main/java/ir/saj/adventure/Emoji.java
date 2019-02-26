@@ -49,7 +49,27 @@ public class Emoji {
     public final static String movieCamera = "\uD83C\uDFA5";
     public final static String eye = "\uD83D\uDC41";
     public final static String hashtag = "#\u20E3";
-    public final static String copyRight= "\u00A9";
+    public final static String zero = "0\u20E3";
+    public final static String one = "1\u20E3";
+    public final static String tow = "2\u20E3";
+    public final static String three = "3\u20E3";
+    public final static String four = "4\u20E3";
+    public final static String five = "5\u20E3";
+    public final static String six = "6\u20E3";
+    public final static String seven = "7\u20E3";
+    public final static String eight = "8\u20E3";
+    public final static String nine = "9\u20E3";
+    public final static String p = "\ud83c\udd7f";
+    public final static String copyRight = "\u00A9";
+    public final static String womanOfficer = "\uD83D\uDC69\u200D\uD83D\uDCBC";
+    public final static String key = "\uD83D\uDDDD";
+
+    public final static String scissor = "\u2702";
+    public final static String page = "\uD83D\uDCC4";
+    public final static String moyaiStone = "\uD83D\uDDFF";
+    public final static String arrowCurvedUp = "\u2934";
+    public final static String clock = "⏰";
+    public final static String registered = "®️";
 
 /*
     public final static String one= "\u20e3";

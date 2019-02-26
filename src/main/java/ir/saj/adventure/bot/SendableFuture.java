@@ -2,6 +2,7 @@ package ir.saj.adventure.bot;
 
 
 import com.pengrad.telegrambot.response.BaseResponse;
+import ir.saj.adventure.bot.callback.Callback;
 
 /**
  * @author Saeed
@@ -26,11 +27,13 @@ public class SendableFuture {
         this.response = response;
         success = response.isOk();
         done = true;
-        if (father.callback() != null) {
+        if (father.callback() != null && father.callback().size() > 0) {
             new Thread() {
                 @Override
                 public void run() {
-                    father.callback().handle(response);
+                    for (Callback callback : father.callback()) {
+                        callback.handle(response);
+                    }
                 }
             }.start();
         }
@@ -48,11 +51,14 @@ public class SendableFuture {
     public SendableFuture fail() {
         this.success = false;
         this.done = true;
-        if (father.callback() != null) {
+        if (father.callback() != null && father.callback().size() > 0) {
             new Thread() {
                 @Override
                 public void run() {
-                    father.callback().onError(null);
+                    for (Callback callback : father.callback()) {
+                        callback.onError(null);
+                    }
+
                 }
             }.start();
         }

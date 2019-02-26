@@ -50,5 +50,12 @@ public class StateInterceptor implements Interceptor {
         return this;
     }
 
+    public StateInterceptor states(StateInterceptor interceptor) {
+        for (Integer stateId : interceptor.handlers.keySet()) {
+            handlers.put(stateId, interceptor.handlers.get(stateId));
+        }
+        return this;
+    }
+
 
 }

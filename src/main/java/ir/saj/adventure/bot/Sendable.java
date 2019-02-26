@@ -4,6 +4,8 @@ import com.pengrad.telegrambot.request.*;
 import com.pengrad.telegrambot.response.BaseResponse;
 import ir.saj.adventure.bot.callback.Callback;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -13,6 +15,7 @@ import java.util.Map;
 public class Sendable {
     SendableFuture future = new SendableFuture(this);
     SendAudio sendAudio = null;
+    SendVoice sendVoice = null;
     SendPhoto sendPhoto = null;
     SendMessage sendMessage = null;
     ForwardMessage forwardMessageMessage = null;
@@ -24,11 +27,34 @@ public class Sendable {
     SendSticker sendSticker = null;
     GetFile getFile = null;
     SendVideo sendVideo = null;
+    AnswerInlineQuery answerInlineQuery = null;
+    GetChatMember getChatMember = null;
+    List<Callback> callbacks = new ArrayList<>();
 
-    Callback callback = null;
+    Integer retries = 0;
+
+    public void increaseTryNumber() {
+        retries++;
+    }
+
+    public void decreasTryNumber() {
+        retries--;
+    }
+
+    public Integer getRetries() {
+        return retries;
+    }
 
     public Sendable(SendVideo sendVideo) {
         this.sendVideo = sendVideo;
+    }
+
+    public Sendable(AnswerInlineQuery answer) {
+        this.answerInlineQuery = answer;
+    }
+
+    public Sendable(SendVoice sendVoice) {
+        this.sendVoice = sendVoice;
     }
 
     public SendableFuture getFuture() {
@@ -41,6 +67,10 @@ public class Sendable {
 
     public Sendable(SendSticker sendSticker) {
         this.sendSticker = sendSticker;
+    }
+
+    public Sendable(GetChatMember getChatMember) {
+        this.getChatMember = getChatMember;
     }
 
     public Sendable(GetFile getFile) {
@@ -59,12 +89,12 @@ public class Sendable {
         this.sendAudio = sendAudio;
     }
 
-    public Callback callback() {
-        return callback;
+    public List<Callback> callback() {
+        return callbacks;
     }
 
     public Sendable callback(Callback callback) {
-        this.callback = callback;
+        this.callbacks.add(callback);
         return this;
     }
 
@@ -117,6 +147,12 @@ public class Sendable {
             return getFile;
         if (sendVideo != null)
             return sendVideo;
+        if (answerInlineQuery != null)
+            return answerInlineQuery;
+        if (sendVoice != null)
+            return sendVoice;
+        if (getChatMember != null)
+            return getChatMember;
         return null;
     }
 
@@ -145,6 +181,12 @@ public class Sendable {
             return "fileGot";
         if (sendVideo != null)
             return "videoSent";
+        if (answerInlineQuery != null)
+            return "inlnAnswer";
+        if (sendVoice != null)
+            return "voiceSent";
+        if (getChatMember != null)
+            return "gotChatMember";
         return "done";
     }
 
@@ -152,8 +194,6 @@ public class Sendable {
         Map<String, Object> parameters = getSendable().getParameters();
         if (parameters != null && parameters.get("chat_id") != null)
             return parameters.get("chat_id").toString();
-        if (answerCallbackQuery != null)
-            System.out.println("");
         return "--";
     }
 }

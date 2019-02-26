@@ -1,11 +1,22 @@
 apply plugin: 'application'
+/*
+
+sourceCompatibility = 1.7
+targetCompatibility = 1.7
+*/
+[compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
+
 version = '1.0'
+repositories {
+    mavenCentral()
+    maven { url 'https://jitpack.io' }
+}
 
 dependencies {
-    compile 'com.github.pengrad:java-telegram-bot-api:3.2.0'
+    compile 'com.github.pengrad:java-telegram-bot-api:4.1.0'
     compile group: 'com.google.guava', name: 'guava', version: '11.0.2'
-    compile project(':common-core')
-
+    compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.21'
+    implementation 'com.github.User:Repo:Tag'
 }
 
 
@@ -22,5 +33,7 @@ task migrateTar(type: Tar) {
         into('migration/sql')
     }
 }
-
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+}
 

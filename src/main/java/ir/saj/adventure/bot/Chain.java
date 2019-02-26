@@ -215,6 +215,10 @@ public class Chain implements Iterable<Sendable> {
         return (incomingMessage() != null && incomingMessage().contact() != null);
     }
 
+    public Contact incomingContact() {
+        return hasContact() ? incomingMessage().contact() : null;
+    }
+
     public boolean hasCallbackQuery() {
         return (update.callbackQuery() != null);
     }
@@ -234,6 +238,10 @@ public class Chain implements Iterable<Sendable> {
 
     public boolean hasAudio() {
         return (update.message() != null && update.message().audio() != null);
+    }
+
+    public boolean hasVoice() {
+        return (update.message() != null && update.message().voice() != null);
     }
 
     public boolean hasPhoto() {
@@ -285,5 +293,41 @@ public class Chain implements Iterable<Sendable> {
 
     public Document incomingDocument() {
         return (hasDocument()) ? incomingMessage().document() : null;
+    }
+
+    public InlineQuery incomingInlineQuery() {
+        return update.inlineQuery();
+    }
+
+    public boolean hasInlineQuery() {
+        return incomingInlineQuery() != null;
+    }
+
+    public boolean hasChosenQuery() {
+        return incomingChosenQuery() != null;
+    }
+
+    private ChosenInlineResult incomingChosenQuery() {
+        return update.chosenInlineResult();
+    }
+
+    public void setProperty(String name, Object value) {
+        bot.getSession().set(incomingChatId(), name, value, false);
+    }
+
+    public void setPermanentProperty(String name, Object value) {
+        bot.getSession().set(incomingChatId(), name, value, true);
+    }
+
+    public Object getProperty(String name) {
+        return bot.getSession().get(incomingChatId(), name);
+    }
+
+    public void deleteProperty(String name) {
+        bot.getSession().delete(incomingChatId(), name);
+    }
+
+    public void cleanProperties() {
+        bot.getSession().clean(incomingChatId());
     }
 }
