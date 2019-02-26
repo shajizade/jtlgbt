@@ -5,6 +5,7 @@ To use this you can add thees snippets to your `build.gradle` :
 
     repositories {
         maven {
+            ...
             url  "https://dl.bintray.com/shajizade/maven"
         }
     }
