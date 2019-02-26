@@ -1,25 +1,33 @@
-apply plugin: 'application'
-/*
+buildscript {
+    repositories {
+        mavenLocal()
+        mavenCentral()
+        jcenter()
+    }
+}
 
-sourceCompatibility = 1.7
-targetCompatibility = 1.7
-*/
+plugins {
+    id "com.jfrog.bintray" version "1.7.3"
+    id "maven-publish"
+    id "java"
+}
+apply plugin: 'java-library'
+group "ir.adVenture"
+version = '1.0.100'
+
 [compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
 
-version = '1.0'
 repositories {
+    mavenLocal()
     mavenCentral()
-    maven { url 'https://jitpack.io' }
+    jcenter()
 }
 
 dependencies {
     compile 'com.github.pengrad:java-telegram-bot-api:4.1.0'
     compile group: 'com.google.guava', name: 'guava', version: '11.0.2'
     compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.21'
-    implementation 'com.github.User:Repo:Tag'
 }
-
-
 task migrateTar(type: Tar) {
     baseName = project.name
     compression 'gzip'
@@ -36,4 +44,76 @@ task migrateTar(type: Tar) {
 tasks.withType(JavaCompile) {
     options.encoding = 'UTF-8'
 }
+jar {
+    manifest {
+        attributes('Implementation-Title': project.name,
+                'Implementation-Version': project.version)
+    }
+}
+task sourcesJar(type: Jar, dependsOn: classes) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+}
+artifacts {
+    archives sourcesJar
+}
+def pomConfig = {
+    licenses {
+        license {
+            name "The Apache Software License, Version 2.0"
+            url "http://www.apache.org/licenses/LICENSE-2.0.txt"
+            distribution "repo"
+        }
+    }
+    developers {
+        developer {
+            id "saeed"
+            name "Saeed Hajizadeh"
+            email "s.hajizadeh@gmail.com"
+        }
+    }
 
+    scm {
+        url "https://github.com/thombergs/myAwesomeLib"
+    }
+}
+
+publishing {
+    publications {
+        mavenPublication(MavenPublication) {
+            from components.java
+            artifact sourcesJar {
+                classifier "sources"
+            }
+            groupId project.group
+            artifactId project.name
+            version project.version
+            pom.withXml {
+                def root = asNode()
+                root.appendNode('description', 'An AWESOME lib. Really!')
+                root.appendNode('name', 'My Awesome Lib')
+                root.appendNode('url', 'https://github.com/thombergs/myAwesomeLib')
+                root.children().last() + pomConfig
+            }
+        }
+    }
+}
+bintray {
+    user = "shajizade"
+    key = "d96e123209823a8060ea92f1f561acc671a4c75e"
+    publications = ['mavenPublication']
+    publish = true
+    pkg {
+        repo = 'maven'
+        name = 'jtlgbt'
+        //userOrg = 'reflectoring'
+        licenses = ['Apache-2.0']
+        vcsUrl = 'https://github.com/shajizade/jtlgbt.git'
+        version {
+            name = '1.0.0'
+            desc = '1.0.0'
+            released  = new Date()
+        }
+    }
+
+}
