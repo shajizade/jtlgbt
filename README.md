@@ -76,3 +76,5 @@ There are much more things to be documented here, and I will complete this later
     Proxy proxy = new java.net.Proxy(Proxy.Type.HTTP, new InetSocketAddress(ip, port));
     bot = new BotManager(botToken, userService, updateInterval, botUsername, botName,proxy);
                
+
+_You can find me here: s.hajizadeh@gmail.com_
