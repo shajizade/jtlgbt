@@ -1,6 +1,6 @@
 # Java TeLeGram Bot
 This is a Wrapper Util on [Pengrad Telegram Bot API](https://github.com/pengrad/java-telegram-bot-api) which make it more a framework than a library.  
-##Download
+## Download
 
 To use this you can add thees snippets to your `build.gradle` :
 
@@ -16,7 +16,7 @@ To use this you can add thees snippets to your `build.gradle` :
     }
     
     
-##Usage
+## Usage
 To use this framework, first inctanciate `BotManager` like this:
 
     //Instanciate a new Bot
@@ -27,7 +27,7 @@ To use this framework, first inctanciate `BotManager` like this:
     bot.start();
      
 Above snippet is a "Do Nothing Bot" which just get updates.
-##I-Am-Watching-Bot
+## I-Am-Watching-Bot
 You may have a list of interceptors to be done on any update. Lets add a simple interceptor to have a simple bot which just log every update:
  
     bot.addInterceptor(new Interceptor() {
@@ -42,7 +42,7 @@ You may have a list of interceptors to be done on any update. Lets add a simple 
                     }
                 });
  
- ##Hello-World-Bot
+ ## Hello-World-Bot
  This interceptor will send a "Hello-World" message in reply of any message:
  
     bot.addInterceptor(new Interceptor() {
@@ -54,7 +54,7 @@ You may have a list of interceptors to be done on any update. Lets add a simple 
                });
                
                
- ##Echo-Bot
+ ## Echo-Bot
  This interceptor will reply back what you write in your message. It will answer just on "Text Messages":
  
     bot.addInterceptor(new Interceptor() {
