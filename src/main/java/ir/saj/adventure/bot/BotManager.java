@@ -19,6 +19,7 @@ import ir.saj.adventure.bot.handlers.StringHandler;
 import ir.saj.adventure.bot.interceptor.Interceptor;
 import ir.saj.adventure.bot.user.BotUserEntityInterface;
 import ir.saj.adventure.bot.user.BotUserServiceInterface;
+import ir.saj.adventure.bot.user.DefaultBotUserService;
 import ir.saj.adventure.exception.BadRequestException;
 import ir.saj.adventure.utils.Session;
 import okhttp3.OkHttpClient;
@@ -50,6 +51,8 @@ public class BotManager {
     public static final int PHOTO_CAPTION_LIMIT = 1024;
     public static final int NUMBER_OF_CUNCURRENT_MESSAGES = 29;
     public static final Date START_DATE = new Date();
+    private static final int DEFAULT_INTERVAL = 300;
+    private static final String BOT_NAME_DEFAULT = "BOT_NAME";
     final Integer updateInterval;
     final Integer retryCountLimit = 5;
     BotUserServiceInterface dbUserService;
@@ -78,6 +81,9 @@ public class BotManager {
         return session;
     }
 
+    public BotManager(String token) {
+        this(token, null, null, null, null, null);
+    }
     public BotManager(String token, BotUserServiceInterface dbUserService, Integer updateInterval, String botUserName, String botName) {
         this(token, dbUserService, updateInterval, botUserName, botName, null);
     }
@@ -91,9 +97,17 @@ public class BotManager {
             client = builder.build();
             this.bot = TelegramBotAdapter.buildCustom(token, client);
         }
+        if (dbUserService == null)
+            dbUserService = new DefaultBotUserService();
         this.dbUserService = dbUserService;
+        if (updateInterval == null || updateInterval <= 0)
+            updateInterval = DEFAULT_INTERVAL;
         this.updateInterval = updateInterval;
+        if (botUserName == null || botUserName.isEmpty())
+            botUserName = "UNDEFINED";
         this.botUserName = botUserName;
+        if (botName == null || botName.isEmpty())
+            botName = BOT_NAME_DEFAULT;
         this.botName = botName;
     }
 
