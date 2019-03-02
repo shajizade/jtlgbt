@@ -12,7 +12,7 @@ To use this you can add thees snippets to your `build.gradle` :
     }
 
     dependencies {
-        compile 'ir.adVenture:jtlgbt:1.0.100'
+        compile 'ir.adVenture:jtlgbt:v1.0'
     }
     
     

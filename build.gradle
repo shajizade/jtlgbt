@@ -13,7 +13,7 @@ plugins {
 }
 apply plugin: 'java-library'
 group "ir.adVenture"
-version = '1.0.100'
+version = 'v1.0'
 
 [compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
 
@@ -74,7 +74,7 @@ def pomConfig = {
     }
 
     scm {
-        url "https://github.com/thombergs/myAwesomeLib"
+        url 'https://github.com/shajizade/jtlgbt.git'
     }
 }
 
@@ -90,9 +90,9 @@ publishing {
             version project.version
             pom.withXml {
                 def root = asNode()
-                root.appendNode('description', 'An AWESOME lib. Really!')
-                root.appendNode('name', 'My Awesome Lib')
-                root.appendNode('url', 'https://github.com/thombergs/myAwesomeLib')
+                root.appendNode('description', 'Java Telegram Bot Library')
+                root.appendNode('name', 'jtlgbt')
+                root.appendNode('url', 'https://github.com/shajizade/jtlgbt.git')
                 root.children().last() + pomConfig
             }
         }
@@ -100,18 +100,17 @@ publishing {
 }
 bintray {
     user = "shajizade"
-    key = "d96e123209823a8060ea92f1f561acc671a4c75e"
+    key = System.getProperty('bintray.key')
     publications = ['mavenPublication']
     publish = true
     pkg {
         repo = 'maven'
         name = 'jtlgbt'
-        //userOrg = 'reflectoring'
         licenses = ['Apache-2.0']
         vcsUrl = 'https://github.com/shajizade/jtlgbt.git'
         version {
-            name = '1.0.0'
-            desc = '1.0.0'
+            name = 'v1.0'
+            desc = 'first real version'
             released  = new Date()
         }
     }
