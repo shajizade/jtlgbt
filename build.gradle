@@ -116,3 +116,4 @@ bintray {
     }
 
 }
+// User this to publish: gradlew bintrayUpload  -Dhttp.proxyHost=ip -Dhttp.proxyPort=p -Dbintray.key=bluhbluh
