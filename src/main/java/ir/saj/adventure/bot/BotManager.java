@@ -84,6 +84,10 @@ public class BotManager {
     public BotManager(String token) {
         this(token, null, null, null, null, null);
     }
+
+    public BotManager(String token, Proxy proxy) {
+        this(token, null, null, null, null, proxy);
+    }
     public BotManager(String token, BotUserServiceInterface dbUserService, Integer updateInterval, String botUserName, String botName) {
         this(token, dbUserService, updateInterval, botUserName, botName, null);
     }

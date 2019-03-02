@@ -20,9 +20,7 @@ To use this you can add thees snippets to your `build.gradle` :
 To use this framework, first inctanciate `BotManager` like this:
 
     //Instanciate a new Bot
-    //updateInterval is the interval between each update. 
-    //For instance if you set it 300 your bot will get updates each 300ms
-    bot = new BotManager(botToken, userService, updateInterval, botUsername, botName);
+    bot = new BotManager(botToken);
     //Start Your bot
     bot.start();
      
@@ -74,7 +72,7 @@ You may have a list of interceptors to be done on any update. Lets add a simple 
 There are much more things to be documented here, and I will complete this later. But as Telegam is filtered in many countries this is really important. This snippet shows you how to use this library connecting to a proxy:
 
     Proxy proxy = new java.net.Proxy(Proxy.Type.HTTP, new InetSocketAddress(ip, port));
-    bot = new BotManager(botToken, userService, updateInterval, botUsername, botName,proxy);
+    bot = new BotManager(botToken, proxy);
                
 
 _You can find me here: s.hajizadeh@gmail.com_
