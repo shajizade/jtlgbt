@@ -1,4 +1,4 @@
-# Java TeLeGram Bot
+# Java TeLeGram BoT
 This is a Wrapper Util on [Pengrad Telegram Bot API](https://github.com/pengrad/java-telegram-bot-api) which make it more a framework than a library.  
 ## Download
 

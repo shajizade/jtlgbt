@@ -1,0 +1,10 @@
+plugins {
+    id "java"
+}
+
+[compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
+
+
+dependencies {
+    compile project(':library')
+}

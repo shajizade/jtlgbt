@@ -1,0 +1,9 @@
+if (!project.hasProperty("build_number")) {
+    project.ext.build_number = "SNAPSHOT"
+}
+project.version = project.version + "-$build_number"
+
+if (!project.hasProperty('nexus_user')) {
+    project.ext.nexus_user = ''
+    project.ext.nexus_pass = ''
+}

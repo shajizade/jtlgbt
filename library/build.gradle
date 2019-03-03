@@ -1,0 +1,113 @@
+buildscript {
+    repositories {
+        mavenLocal()
+        mavenCentral()
+        jcenter()
+    }
+}
+plugins {
+    id "com.jfrog.bintray" version "1.7.3"
+    id "maven-publish"
+    id "java"
+}
+apply plugin: 'java-library'
+group "ir.adVenture"
+version = 'v1.0'
+
+[compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
+
+
+dependencies {
+    compile 'com.github.pengrad:java-telegram-bot-api:4.1.1'
+    compile group: 'com.google.guava', name: 'guava', version: '11.0.2'
+    compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.21'
+}
+task migrateTar(type: Tar) {
+    baseName = project.name
+    compression 'gzip'
+    extension 'tar'
+    destinationDir = "$buildDir/distributions" as File
+
+    from('src/main/resources/db/conf') {
+        into('migration/conf')
+    }
+    from('src/main/resources/db/migration') {
+        into('migration/sql')
+    }
+}
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+}
+jar {
+    manifest {
+        attributes('Implementation-Title': project.name,
+                'Implementation-Version': project.version)
+    }
+}
+task sourcesJar(type: Jar, dependsOn: classes) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+}
+artifacts {
+    archives sourcesJar
+}
+def pomConfig = {
+    licenses {
+        license {
+            name "The Apache Software License, Version 2.0"
+            url "http://www.apache.org/licenses/LICENSE-2.0.txt"
+            distribution "repo"
+        }
+    }
+    developers {
+        developer {
+            id "saeed"
+            name "Saeed Hajizadeh"
+            email "s.hajizadeh@gmail.com"
+        }
+    }
+
+    scm {
+        url 'https://github.com/shajizade/jtlgbt.git'
+    }
+}
+
+publishing {
+    publications {
+        mavenPublication(MavenPublication) {
+            from components.java
+            artifact sourcesJar {
+                classifier "sources"
+            }
+            groupId project.group
+            artifactId project.name
+            version project.version
+            pom.withXml {
+                def root = asNode()
+                root.appendNode('description', 'Java Telegram Bot Library')
+                root.appendNode('name', 'jtlgbt')
+                root.appendNode('url', 'https://github.com/shajizade/jtlgbt.git')
+                root.children().last() + pomConfig
+            }
+        }
+    }
+}
+bintray {
+    user = "shajizade"
+    key = System.getProperty('bintray.key')
+    publications = ['mavenPublication']
+    publish = true
+    pkg {
+        repo = 'maven'
+        name = 'jtlgbt'
+        licenses = ['Apache-2.0']
+        vcsUrl = 'https://github.com/shajizade/jtlgbt.git'
+        version {
+            name = 'v1.0'
+            desc = 'first real version'
+            released = new Date()
+        }
+    }
+
+}
+// User this to publish: gradlew bintrayUpload  -Dhttp.proxyHost=ip -Dhttp.proxyPort=p -Dbintray.key=bluhbluh
